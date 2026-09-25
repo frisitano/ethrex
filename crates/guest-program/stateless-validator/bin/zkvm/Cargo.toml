@@ -1,0 +1,27 @@
+[workspace]
+
+[package]
+version = "23.0.0"
+name = "stateless-validator-ethrex-zkvm"
+edition = "2024"
+license = "MIT OR Apache-2.0"
+
+# One guest object for every zkVM: a `staticlib` of LLVM bitcode, linked against a zkVM SDK
+# (`libzkvm.a` + `zkvm.ld`) by ere's toolchain. It names no zkVM.
+[lib]
+crate-type = ["staticlib"]
+
+[dependencies]
+# Draft: a path into an ere checkout next to this one, until ere publishes `ere-platform-zkvm`.
+ere-platform-zkvm = { path = "../../../../../../ere/crates/platform/zkvm" }
+
+ethrex-stateless-validator = { path = "../..", features = ["ere", "zkvm-interface"] }
+
+# ere-platform-zkvm implements the workspace's ere-platform-core, unchanged since v0.17.0.
+[patch."https://github.com/eth-act/ere"]
+ere-platform-core = { path = "../../../../../../ere/crates/platform/core" }
+
+[profile.release]
+codegen-units = 1
+lto = "fat"
+panic = "abort"
