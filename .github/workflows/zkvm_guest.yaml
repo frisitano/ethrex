@@ -1,5 +1,5 @@
 # Builds the stateless validator as one zkVM-agnostic guest object, then links, tests and packages
-# it for every zkVM with ere's reusable workflow.
+# it for every zkVM with ere-guests' reusable workflow, against Ere's published SDKs.
 name: zkVM guest
 
 on:
@@ -16,8 +16,10 @@ jobs:
 
       - name: Build
         id: build
-        uses: frisitano/ere/.github/actions/build-guest-object@feat/zkvm-accelerators-linker
+        uses: frisitano/ere-guests/.github/actions/build-guest-object@feat/zkvm-accelerators-linker
         with:
+          sdk-repository: frisitano/ere
+          sdk-release: sdk-dev-1
           crate: crates/guest-program/stateless-validator/bin/zkvm
 
       - uses: actions/upload-artifact@v4
@@ -27,12 +29,12 @@ jobs:
 
   zkvm:
     needs: guest-object
-    uses: frisitano/ere/.github/workflows/link-guest.yml@feat/zkvm-accelerators-linker
+    uses: frisitano/ere-guests/.github/workflows/link-guest.yml@feat/zkvm-accelerators-linker
     with:
       guest-object: guest-object
       name: stateless-validator-ethrex
-      ere-repository: frisitano/ere
-      ere-ref: feat/zkvm-accelerators-linker
+      sdk-repository: frisitano/ere
+      sdk-release: sdk-dev-1
       test-stateless-validator: ethrex
       # ere's Optuna-tuned LLVM options for ethrex on ZisK (`ERE_PROFILE=ethrex`), applied at link time.
       lto-args: '{"zisk": "--inline-threshold=4749 --unroll-threshold=378 --memdep-block-number-limit=2510 --memdep-block-scan-limit=98 --jump-threading-threshold=16 --max-speculation-depth=0 --licm-versioning-max-depth-threshold=0 --max-uses-for-sinking=119 --inline-instr-cost=1 --inline-memaccess-cost=1 --inline-call-penalty=12 --available-load-scan-limit=23 --bonus-inst-threshold=5 --max-num-inline-blocks=6 --loop-interchange-threshold=2 --licm-max-num-uses-traversed=24 --early-ifcvt-limit=29 --jump-threading-implication-search-threshold=6 --loop-distribute-scev-check-threshold=0 --loop-load-elimination-scev-check-threshold=7 --max-dependences=6 --max-nested-scalar-reduction-interleave=2 --disable-licm-promotion"}'
