@@ -20,7 +20,9 @@ use crate::{
     opcode_handlers::OpcodeHandler,
     vm::VM,
 };
-use ethrex_common::{U256, U512};
+use ethrex_common::U256;
+#[cfg(not(feature = "zkvm-u256"))]
+use ethrex_common::U512;
 
 /// Implementation for the `ADD` opcode.
 pub struct OpAddHandler;
@@ -58,7 +60,14 @@ impl OpcodeHandler for OpMulHandler {
         vm.current_call_frame.increase_consumed_gas(gas_cost::MUL)?;
 
         let (lhs, rhs) = vm.current_call_frame.stack.pop1_and_top_mut()?;
-        *rhs = lhs.overflowing_mul(*rhs).0;
+        #[cfg(feature = "zkvm-u256")]
+        {
+            *rhs = crate::zkvm_u256::mul(&lhs, rhs);
+        }
+        #[cfg(not(feature = "zkvm-u256"))]
+        {
+            *rhs = lhs.overflowing_mul(*rhs).0;
+        }
 
         Ok(OpcodeResult::Continue)
     }
@@ -72,7 +81,14 @@ impl OpcodeHandler for OpDivHandler {
         vm.current_call_frame.increase_consumed_gas(gas_cost::DIV)?;
 
         let (lhs, rhs) = vm.current_call_frame.stack.pop1_and_top_mut()?;
-        *rhs = lhs.checked_div(*rhs).unwrap_or(U256::zero());
+        #[cfg(feature = "zkvm-u256")]
+        {
+            *rhs = crate::zkvm_u256::div(&lhs, rhs);
+        }
+        #[cfg(not(feature = "zkvm-u256"))]
+        {
+            *rhs = lhs.checked_div(*rhs).unwrap_or(U256::zero());
+        }
 
         Ok(OpcodeResult::Continue)
     }
@@ -122,7 +138,14 @@ impl OpcodeHandler for OpModHandler {
         vm.current_call_frame.increase_consumed_gas(gas_cost::MOD)?;
 
         let (lhs, rhs) = vm.current_call_frame.stack.pop1_and_top_mut()?;
-        *rhs = lhs.checked_rem(*rhs).unwrap_or(U256::zero());
+        #[cfg(feature = "zkvm-u256")]
+        {
+            *rhs = crate::zkvm_u256::rem(&lhs, rhs);
+        }
+        #[cfg(not(feature = "zkvm-u256"))]
+        {
+            *rhs = lhs.checked_rem(*rhs).unwrap_or(U256::zero());
+        }
 
         Ok(OpcodeResult::Continue)
     }
@@ -171,6 +194,13 @@ impl OpcodeHandler for OpAddModHandler {
             .increase_consumed_gas(gas_cost::ADDMOD)?;
 
         let [lhs, rhs, r#mod] = *vm.current_call_frame.stack.pop()?;
+        #[cfg(feature = "zkvm-u256")]
+        {
+            vm.current_call_frame
+                .stack
+                .push(crate::zkvm_u256::add_mod(&lhs, &rhs, &r#mod))?;
+        }
+        #[cfg(not(feature = "zkvm-u256"))]
         if r#mod.is_zero() || r#mod == U256::one() {
             vm.current_call_frame.stack.push_zero()?;
         } else {
@@ -197,6 +227,15 @@ impl OpcodeHandler for OpMulModHandler {
             .increase_consumed_gas(gas_cost::MULMOD)?;
 
         let [multiplicand, multiplier, modulus] = *vm.current_call_frame.stack.pop()?;
+        #[cfg(feature = "zkvm-u256")]
+        {
+            vm.current_call_frame.stack.push(crate::zkvm_u256::mul_mod(
+                &multiplicand,
+                &multiplier,
+                &modulus,
+            ))?;
+        }
+        #[cfg(not(feature = "zkvm-u256"))]
         if modulus.is_zero() || multiplicand.is_zero() || multiplier.is_zero() {
             vm.current_call_frame.stack.push_zero()?;
         } else {
@@ -221,6 +260,9 @@ impl OpcodeHandler for OpExpHandler {
         vm.current_call_frame
             .increase_consumed_gas(gas_cost::exp(exp)?)?;
 
+        #[cfg(feature = "zkvm-u256")]
+        let res = crate::zkvm_u256::exp(&base, &exp);
+        #[cfg(not(feature = "zkvm-u256"))]
         let (res, _) = base.overflowing_pow(exp);
         vm.current_call_frame.stack.push(res)?;
 

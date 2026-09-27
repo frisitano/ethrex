@@ -136,25 +136,6 @@ impl Crypto for ZkVMInterfaceCrypto {
         checked(ret == 0, output, "modexp")
     }
 
-    #[cfg(all(feature = "zkvm-sdk", not(feature = "zisk")))]
-    #[inline]
-    fn mulmod256(&self, a: &[u8; 32], b: &[u8; 32], m: &[u8; 32]) -> [u8; 32] {
-        // `zkvm_u256_mulmod` of the zkvm-standards U256 interface draft (`zkvm_u256.h`): every
-        // zkVM SDK defines it, accelerated or not. EVM semantics: zero for a zero modulus.
-        unsafe extern "C" {
-            fn zkvm_u256_mulmod(
-                a: *const [u8; 32],
-                b: *const [u8; 32],
-                n: *const [u8; 32],
-                result: *mut [u8; 32],
-            ) -> i32;
-        }
-
-        let mut result = [0u8; 32];
-        unsafe { zkvm_u256_mulmod(a, b, m, &mut result) };
-        result
-    }
-
     #[cfg(feature = "zisk")]
     #[inline]
     fn mulmod256(&self, a: &[u8; 32], b: &[u8; 32], m: &[u8; 32]) -> [u8; 32] {

@@ -36,6 +36,9 @@ perf_opcode_timings = []
 sp1 = []
 risc0 = ["c-kzg"]
 zisk = []
+# MUL, DIV, MOD, ADDMOD, MULMOD and EXP through the `zkvm_u256_*` functions of the zkVM SDK a
+# zkVM-agnostic guest is linked against.
+zkvm-u256 = []
 rayon = ["dep:rayon"]
 secp256k1 = []
 

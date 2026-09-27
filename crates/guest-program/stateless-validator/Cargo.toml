@@ -72,9 +72,10 @@ sp1 = ["zkvm-interface"]
 # enables. Without it the two ZisK guests compile different cell types.
 zisk = ["zkvm-interface", "ethrex-common/zisk"]
 # One zkVM-agnostic guest object, linked against any zkVM's SDK: every accelerator is an extern the
-# SDK defines, including `zkvm_u256_mulmod` (zkvm-standards U256 draft) for MULMOD, and the cells
-# are single-threaded, as every zkVM guest is. Names no zkVM.
-zkvm-sdk = ["zkvm-interface", "ethrex-common/zisk"]
+# SDK defines, including the 256-bit arithmetic of MUL, DIV, MOD, ADDMOD, MULMOD and EXP
+# (`zkvm_u256_*` on the stack's little-endian limbs), and the cells are single-threaded, as every
+# zkVM guest is. Names no zkVM.
+zkvm-sdk = ["zkvm-interface", "ethrex-common/zisk", "ethrex-guest-program/zkvm-u256"]
 openvm = [
     "dep:openvm-ecc-guest",
     "dep:openvm-sha2",

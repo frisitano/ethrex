@@ -82,6 +82,8 @@ pub mod tracing;
 pub mod utils;
 pub mod validation_observer;
 pub mod vm;
+#[cfg(feature = "zkvm-u256")]
+pub mod zkvm_u256;
 pub use environment::*;
 pub mod account;
 pub mod execute_precompile;
