@@ -15,7 +15,7 @@ crate-type = ["staticlib"]
 # Draft: ere-platform-zkvm from the ere branch that adds it, until ere releases it.
 ere-platform-zkvm = { git = "https://github.com/frisitano/ere", branch = "feat/zkvm-accelerators-linker" }
 
-ethrex-stateless-validator = { path = "../..", features = ["ere", "zkvm-interface"] }
+ethrex-stateless-validator = { path = "../..", features = ["ere", "zkvm-sdk"] }
 
 # ere-platform-zkvm implements the workspace's ere-platform-core, unchanged since v0.17.0.
 [patch."https://github.com/eth-act/ere"]
