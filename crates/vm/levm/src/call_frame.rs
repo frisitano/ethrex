@@ -106,6 +106,22 @@ impl Stack {
     /// in place (one `offset` write instead of `pop::<2>` + `push`'s two), where `a` is the
     /// original top and `*b` the original second operand.
     #[inline]
+    /// As [`Self::pop1_and_top_mut`], but the popped value by reference to its slot, which stays
+    /// valid until the next push: the zkVM SDK's 256-bit arithmetic reads it in place instead of
+    /// from a copy.
+    #[cfg(feature = "zkvm-u256")]
+    pub fn pop1_ref_and_top_mut(&mut self) -> Result<(&U256, &mut U256), ExceptionalHalt> {
+        let offset = self.offset;
+        let [popped, top] = self
+            .values
+            .get_mut(offset..)
+            .and_then(|values| values.first_chunk_mut::<2>())
+            .ok_or(ExceptionalHalt::StackUnderflow)?;
+        // As in `pop1`: `offset` is below STACK_LIMIT, so this cannot overflow.
+        self.offset = offset.wrapping_add(1);
+        Ok((popped, top))
+    }
+
     pub fn pop1_and_top_mut(&mut self) -> Result<(U256, &mut U256), ExceptionalHalt> {
         let a = self.pop1()?;
         Ok((a, self.top_mut()?))

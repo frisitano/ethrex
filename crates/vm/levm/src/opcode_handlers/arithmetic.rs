@@ -59,13 +59,14 @@ impl OpcodeHandler for OpMulHandler {
     fn eval(vm: &mut VM<'_>) -> Result<OpcodeResult, VMError> {
         vm.current_call_frame.increase_consumed_gas(gas_cost::MUL)?;
 
-        let (lhs, rhs) = vm.current_call_frame.stack.pop1_and_top_mut()?;
         #[cfg(feature = "zkvm-u256")]
         {
-            *rhs = crate::zkvm_u256::mul(&lhs, rhs);
+            let (lhs, rhs) = vm.current_call_frame.stack.pop1_ref_and_top_mut()?;
+            *rhs = crate::zkvm_u256::mul(lhs, rhs);
         }
         #[cfg(not(feature = "zkvm-u256"))]
         {
+            let (lhs, rhs) = vm.current_call_frame.stack.pop1_and_top_mut()?;
             *rhs = lhs.overflowing_mul(*rhs).0;
         }
 
@@ -80,13 +81,14 @@ impl OpcodeHandler for OpDivHandler {
     fn eval(vm: &mut VM<'_>) -> Result<OpcodeResult, VMError> {
         vm.current_call_frame.increase_consumed_gas(gas_cost::DIV)?;
 
-        let (lhs, rhs) = vm.current_call_frame.stack.pop1_and_top_mut()?;
         #[cfg(feature = "zkvm-u256")]
         {
-            *rhs = crate::zkvm_u256::div(&lhs, rhs);
+            let (lhs, rhs) = vm.current_call_frame.stack.pop1_ref_and_top_mut()?;
+            *rhs = crate::zkvm_u256::div(lhs, rhs);
         }
         #[cfg(not(feature = "zkvm-u256"))]
         {
+            let (lhs, rhs) = vm.current_call_frame.stack.pop1_and_top_mut()?;
             *rhs = lhs.checked_div(*rhs).unwrap_or(U256::zero());
         }
 
@@ -137,13 +139,14 @@ impl OpcodeHandler for OpModHandler {
     fn eval(vm: &mut VM<'_>) -> Result<OpcodeResult, VMError> {
         vm.current_call_frame.increase_consumed_gas(gas_cost::MOD)?;
 
-        let (lhs, rhs) = vm.current_call_frame.stack.pop1_and_top_mut()?;
         #[cfg(feature = "zkvm-u256")]
         {
-            *rhs = crate::zkvm_u256::rem(&lhs, rhs);
+            let (lhs, rhs) = vm.current_call_frame.stack.pop1_ref_and_top_mut()?;
+            *rhs = crate::zkvm_u256::rem(lhs, rhs);
         }
         #[cfg(not(feature = "zkvm-u256"))]
         {
+            let (lhs, rhs) = vm.current_call_frame.stack.pop1_and_top_mut()?;
             *rhs = lhs.checked_rem(*rhs).unwrap_or(U256::zero());
         }
 
@@ -193,13 +196,15 @@ impl OpcodeHandler for OpAddModHandler {
         vm.current_call_frame
             .increase_consumed_gas(gas_cost::ADDMOD)?;
 
-        let [lhs, rhs, r#mod] = *vm.current_call_frame.stack.pop()?;
         #[cfg(feature = "zkvm-u256")]
         {
-            vm.current_call_frame
-                .stack
-                .push(crate::zkvm_u256::add_mod(&lhs, &rhs, &r#mod))?;
+            // The operands are read in their stack slots; the result is pushed once they are.
+            let [lhs, rhs, r#mod] = vm.current_call_frame.stack.pop()?;
+            let res = crate::zkvm_u256::add_mod(lhs, rhs, r#mod);
+            vm.current_call_frame.stack.push(res)?;
         }
+        #[cfg(not(feature = "zkvm-u256"))]
+        let [lhs, rhs, r#mod] = *vm.current_call_frame.stack.pop()?;
         #[cfg(not(feature = "zkvm-u256"))]
         if r#mod.is_zero() || r#mod == U256::one() {
             vm.current_call_frame.stack.push_zero()?;
@@ -226,15 +231,15 @@ impl OpcodeHandler for OpMulModHandler {
         vm.current_call_frame
             .increase_consumed_gas(gas_cost::MULMOD)?;
 
-        let [multiplicand, multiplier, modulus] = *vm.current_call_frame.stack.pop()?;
         #[cfg(feature = "zkvm-u256")]
         {
-            vm.current_call_frame.stack.push(crate::zkvm_u256::mul_mod(
-                &multiplicand,
-                &multiplier,
-                &modulus,
-            ))?;
+            // The operands are read in their stack slots; the result is pushed once they are.
+            let [multiplicand, multiplier, modulus] = vm.current_call_frame.stack.pop()?;
+            let res = crate::zkvm_u256::mul_mod(multiplicand, multiplier, modulus);
+            vm.current_call_frame.stack.push(res)?;
         }
+        #[cfg(not(feature = "zkvm-u256"))]
+        let [multiplicand, multiplier, modulus] = *vm.current_call_frame.stack.pop()?;
         #[cfg(not(feature = "zkvm-u256"))]
         if modulus.is_zero() || multiplicand.is_zero() || multiplier.is_zero() {
             vm.current_call_frame.stack.push_zero()?;
