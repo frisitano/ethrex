@@ -71,6 +71,9 @@ sp1 = ["zkvm-interface"]
 # `unsync_cell` one on riscv64, matching what `guest-program/bin/zisk` already
 # enables. Without it the two ZisK guests compile different cell types.
 zisk = ["zkvm-interface", "ethrex-common/zisk"]
+# One zkVM-agnostic guest object, linked against any zkVM's SDK: every accelerator is an extern the
+# SDK defines, and the cells are single-threaded, as every zkVM guest is. Names no zkVM.
+zkvm-sdk = ["zkvm-interface", "ethrex-common/zisk"]
 openvm = [
     "dep:openvm-ecc-guest",
     "dep:openvm-sha2",

@@ -1,0 +1,23 @@
+[workspace]
+
+[package]
+version = "23.0.0"
+name = "stateless-validator-ethrex-zkvm"
+edition = "2024"
+license = "MIT OR Apache-2.0"
+
+# One guest object for every zkVM: a `staticlib` of LLVM bitcode, linked against a zkVM SDK
+# (`libzkvm.a` + `zkvm.ld`) by ere-guests' toolchain. It names no zkVM.
+[lib]
+crate-type = ["staticlib"]
+
+[dependencies]
+# The guest's runtime. Draft: from the ere-guests branch that adds it, until ere-guests releases it.
+ere-platform-zkvm = { git = "https://github.com/frisitano/ere-guests", branch = "feat/zkvm-sdk" }
+
+ethrex-stateless-validator = { path = "../..", features = ["ere", "zkvm-sdk"] }
+
+[profile.release]
+codegen-units = 1
+lto = "fat"
+panic = "abort"
